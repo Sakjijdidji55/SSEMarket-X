@@ -52,10 +52,18 @@ class MusicPlayerService extends ChangeNotifier {
     _ensureListeners();
     try {
       error.value = null;
-      if (current.value?.musicID != music.musicID) {
-        await _player.setUrl(music.fileUrl);
+      if (current.value?.musicID != music.musicID ||
+          current.value?.fileUrl != music.fileUrl) {
+        final url = music.fileUrl;
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+          await _player.setUrl(url);
+        } else {
+          await _player.setFilePath(url);
+        }
         current.value = music;
-        await ApiService().reportMusicPlayed(music.musicID);
+        if (music.musicID > 0) {
+          await ApiService().reportMusicPlayed(music.musicID);
+        }
       }
       await _player.play();
       return true;

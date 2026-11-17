@@ -11,6 +11,7 @@ enum CacheCategory {
   post('post', '帖子'),
   product('product', '闲置'),
   chat('chat', '聊天'),
+  music('music', '音乐'),
   other('other', '其他');
 
   final String prefix;

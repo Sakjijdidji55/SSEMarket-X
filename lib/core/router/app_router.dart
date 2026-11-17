@@ -7,6 +7,11 @@ import 'package:sse_market_x/views/auth/login_page.dart';
 import 'package:sse_market_x/views/index_page.dart';
 import 'package:sse_market_x/views/post/post_detail_page.dart';
 import 'package:sse_market_x/views/home/annual_report_page.dart';
+import 'package:sse_market_x/views/course/course_page.dart';
+import 'package:sse_market_x/views/media/media_hub_page.dart';
+import 'package:sse_market_x/views/novel/novel_home_page.dart';
+import 'package:sse_market_x/views/resume/resume_list_page.dart';
+import 'package:sse_market_x/views/rank/ranking_page.dart';
 
 final GoRouter appRouter = GoRouter(
   navigatorKey: appNavigatorKey,
@@ -80,6 +85,36 @@ final GoRouter appRouter = GoRouter(
       path: '/annual-report',
       builder: (BuildContext context, GoRouterState state) {
         return const AnnualReportPage();
+      },
+    ),
+    GoRoute(
+      path: '/ranking',
+      builder: (BuildContext context, GoRouterState state) {
+        return RankingPage(apiService: ApiService());
+      },
+    ),
+    GoRoute(
+      path: '/media',
+      builder: (BuildContext context, GoRouterState state) {
+        return MediaHubPage(apiService: ApiService());
+      },
+    ),
+    GoRoute(
+      path: '/novel',
+      builder: (BuildContext context, GoRouterState state) {
+        return NovelHomePage(apiService: ApiService());
+      },
+    ),
+    GoRoute(
+      path: '/resume',
+      builder: (BuildContext context, GoRouterState state) {
+        return ResumeListPage(apiService: ApiService());
+      },
+    ),
+    GoRoute(
+      path: '/course',
+      builder: (BuildContext context, GoRouterState state) {
+        return CoursePage(apiService: ApiService());
       },
     ),
   ],

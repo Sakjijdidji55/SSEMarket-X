@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 
+import 'package:sse_market_x/core/api/api_service.dart';
 import 'package:sse_market_x/core/miniprogram/mini_program_runtime.dart';
 import 'package:sse_market_x/core/miniprogram/mp_platform_api.dart';
 import 'package:sse_market_x/core/services/mini_program_catalog.dart';
 import 'package:sse_market_x/core/services/mini_program_history_service.dart';
+import 'package:sse_market_x/core/services/native_upgrade_flags.dart';
 import 'package:sse_market_x/shared/components/icons/mini_program_icon.dart';
+import 'package:sse_market_x/views/course/course_page.dart';
+import 'package:sse_market_x/views/media/media_hub_page.dart';
+import 'package:sse_market_x/views/novel/novel_home_page.dart';
+import 'package:sse_market_x/views/resume/resume_list_page.dart';
+import 'package:sse_market_x/views/rank/ranking_page.dart';
 import 'package:sse_market_x/shared/theme/app_colors.dart';
 
 /// 微信式小程序面板：最近使用 / 我的小程序 / 全部小程序 / 搜索。
@@ -140,7 +147,50 @@ class _MiniProgramPanelState extends State<MiniProgramPanel> {
   }
 
   Future<void> _open(MPApp app) async {
+    final navigator = Navigator.of(context);
     _close();
+    // 已完成原生化的页面直接进 Flutter 页面，不再走 WebView/小程序窗口。
+    // 出问题可用 --dart-define=NATIVE_RANKING=false 切回小程序。
+    if (NativeUpgradeFlags.ranking && app.appKey == 'ranking') {
+      await navigator.push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => RankingPage(apiService: ApiService()),
+        ),
+      );
+      return;
+    }
+    if (NativeUpgradeFlags.media && app.appKey == 'media') {
+      await navigator.push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => MediaHubPage(apiService: ApiService()),
+        ),
+      );
+      return;
+    }
+    if (NativeUpgradeFlags.novel && app.appKey == 'novel') {
+      await navigator.push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => NovelHomePage(apiService: ApiService()),
+        ),
+      );
+      return;
+    }
+    if (NativeUpgradeFlags.resume && app.appKey == 'resume') {
+      await navigator.push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => ResumeListPage(apiService: ApiService()),
+        ),
+      );
+      return;
+    }
+    if (NativeUpgradeFlags.course && app.appKey == 'course') {
+      await navigator.push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => CoursePage(apiService: ApiService()),
+        ),
+      );
+      return;
+    }
     await MiniProgramRuntime().open(app);
   }
 
@@ -293,8 +343,8 @@ class _MiniProgramPanelState extends State<MiniProgramPanel> {
         builder: (_) => MiniProgramSearchPage(
           apps: _apps.isEmpty ? MPFallbackApps.apps : _apps,
           onOpen: (app) async {
-            _close();
-            await MiniProgramRuntime().open(app);
+            Navigator.of(context).pop();
+            await _open(app);
           },
         ),
       ),

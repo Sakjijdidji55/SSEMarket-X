@@ -10,6 +10,8 @@ class MusicModel {
   final int playCount;
   final String uploaderName;
   final String postTime;
+  /// 非主站音乐（TTS/翻唱结果）直接给可播放地址；为空时走主站 music/file。
+  final String? streamUrl;
 
   const MusicModel({
     required this.musicID,
@@ -22,6 +24,7 @@ class MusicModel {
     this.playCount = 0,
     this.uploaderName = '',
     this.postTime = '',
+    this.streamUrl,
   });
 
   factory MusicModel.fromDynamic(dynamic raw) {
@@ -47,7 +50,8 @@ class MusicModel {
     );
   }
 
-  String get fileUrl => 'https://ssemarket.cn/api/music/file/$musicID';
+  String get fileUrl =>
+      streamUrl ?? 'https://ssemarket.cn/api/music/file/$musicID';
   String? get coverUrl =>
       hasCover ? 'https://ssemarket.cn/api/music/cover/$musicID' : null;
 }
