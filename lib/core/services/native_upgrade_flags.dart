@@ -8,7 +8,7 @@ class NativeUpgradeFlags {
   /// 排行榜（第一个原生化样板页）。
   static const bool ranking = bool.fromEnvironment(
     'NATIVE_RANKING',
-    defaultValue: true,
+    defaultValue: false,
   );
 
   /// 后续页面完成验收后再逐个打开。
@@ -22,10 +22,10 @@ class NativeUpgradeFlags {
   );
   static const bool resume = bool.fromEnvironment(
     'NATIVE_RESUME',
-    defaultValue: true,
+    defaultValue: false,
   );
   static const bool course = bool.fromEnvironment(
     'NATIVE_COURSE',
-    defaultValue: true,
+    defaultValue: false,
   );
 }

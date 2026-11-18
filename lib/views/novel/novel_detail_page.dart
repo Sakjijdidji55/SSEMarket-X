@@ -4,6 +4,7 @@ import 'package:sse_market_x/core/api/api_service.dart';
 import 'package:sse_market_x/core/api/novel_api.dart';
 import 'package:sse_market_x/core/models/novel_models.dart';
 import 'package:sse_market_x/core/services/media_cache_service.dart';
+import 'package:sse_market_x/core/services/novel_cache_store.dart';
 import 'package:sse_market_x/shared/components/media/cached_image.dart';
 import 'package:sse_market_x/shared/theme/app_colors.dart';
 import 'package:sse_market_x/views/novel/novel_reader_page.dart';
@@ -38,6 +39,11 @@ class _NovelDetailPageState extends State<NovelDetailPage> {
   @override
   void initState() {
     super.initState();
+    final cached = NovelCacheStore.instance.details[widget.novelID];
+    if (cached != null) {
+      _novel = cached;
+      _loading = false;
+    }
     _load();
   }
 
@@ -71,6 +77,7 @@ class _NovelDetailPageState extends State<NovelDetailPage> {
           .chapters;
       final comments =
           (results[1] as ({List<NovelComment> comments, int total})).comments;
+      NovelCacheStore.instance.details[widget.novelID] = detail;
       setState(() {
         _novel = detail;
         _chapters = chapters;

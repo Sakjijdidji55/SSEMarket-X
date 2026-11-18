@@ -151,9 +151,9 @@ class MiniProgramRuntime extends ChangeNotifier {
         );
   }
 
-  Future<void> openByKey(String appKey, {String? name}) async {
+  Future<void> openByKey(String appKey, {String? name, String? path}) async {
     final app = await resolveApp(appKey);
-    await open(app);
+    await open(app, entryPath: path);
   }
 
   /// 票据同时绑定 appKey 与 origin，缓存键必须把两者都带上，
@@ -200,7 +200,7 @@ class MiniProgramRuntime extends ChangeNotifier {
     return _fetchTicket(app);
   }
 
-  Future<void> open(MPApp app) async {
+  Future<void> open(MPApp app, {String? entryPath}) async {
     unawaited(_logDesktopOpen('runtime.open appKey=${app.appKey} name=${app.name}'));
 
     // 桌面端没有 Flutter 内嵌 WebView：在独立的浏览器窗口中打开小程序，
@@ -232,7 +232,14 @@ class MiniProgramRuntime extends ChangeNotifier {
       unawaited(_logDesktopOpen('launchTicket ok appKey=${app.appKey} url=${ticket.launchUrl}'));
       final effectiveApp = ticket.app ?? app;
       _app = effectiveApp;
-      final uri = Uri.parse(ticket.launchUrl);
+      var uri = Uri.parse(ticket.launchUrl);
+      // 需要直接打开小程序内部路由时（例如媒体小程序的 /video），
+      // 在 launchURL 的 base path 后追加路径，保留 source token 查询参数。
+      if (entryPath != null && entryPath.trim().isNotEmpty) {
+        final basePath = uri.path.endsWith('/') ? uri.path : '${uri.path}/';
+        final clean = entryPath.replaceFirst(RegExp(r'^/+'), '');
+        uri = uri.replace(path: '$basePath$clean');
+      }
       if (!_isAllowed(effectiveApp, uri)) {
         throw MPException(
             400, 'ORIGIN_MISMATCH', 'launchURL 不在允许的 origin 内', null);

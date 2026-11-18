@@ -7,6 +7,7 @@ import 'package:sse_market_x/core/api/api_service.dart';
 import 'package:sse_market_x/core/api/novel_api.dart';
 import 'package:sse_market_x/core/models/novel_models.dart';
 import 'package:sse_market_x/core/services/media_cache_service.dart';
+import 'package:sse_market_x/core/services/novel_cache_store.dart';
 import 'package:sse_market_x/shared/components/media/cached_image.dart';
 
 const Color _novelAccent = Color(0xFF2C3D56);
@@ -53,6 +54,11 @@ class _NovelReaderPageState extends State<NovelReaderPage> {
   void initState() {
     super.initState();
     _loadSettings();
+    final cached = NovelCacheStore.instance.chapters[widget.chapterID];
+    if (cached != null) {
+      _detail = cached;
+      _loading = false;
+    }
     _load();
     _scroll.addListener(_onScroll);
     _reportTimer = Timer.periodic(const Duration(seconds: 20), (_) {
@@ -87,7 +93,7 @@ class _NovelReaderPageState extends State<NovelReaderPage> {
 
   Future<void> _load() async {
     setState(() {
-      _loading = true;
+      if (_detail == null) _loading = true;
       _error = null;
     });
     try {
@@ -100,6 +106,7 @@ class _NovelReaderPageState extends State<NovelReaderPage> {
         });
         return;
       }
+      NovelCacheStore.instance.chapters[widget.chapterID] = detail;
       setState(() {
         _detail = detail;
         _loading = false;

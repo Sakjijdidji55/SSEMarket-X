@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 
 import 'package:sse_market_x/core/api/api_service.dart';
 import 'package:sse_market_x/core/api/media_api.dart';
+import 'package:sse_market_x/core/miniprogram/mini_program_runtime.dart';
 import 'package:sse_market_x/core/models/media_models.dart';
 import 'package:sse_market_x/core/models/music_model.dart';
 import 'package:sse_market_x/core/services/media_cache_service.dart';
+import 'package:sse_market_x/core/services/media_cache_store.dart';
 import 'package:sse_market_x/core/services/music_player_service.dart';
 import 'package:sse_market_x/shared/components/media/cached_image.dart';
 import 'package:sse_market_x/shared/theme/app_colors.dart';
 import 'package:sse_market_x/views/media/music_page.dart';
-import 'package:sse_market_x/views/media/video_list_page.dart';
 
 /// 原生「音乐视频」首页，对齐 Web `MediaHubView.vue`。
 class MediaHubPage extends StatefulWidget {
@@ -31,6 +32,12 @@ class _MediaHubPageState extends State<MediaHubPage> {
   @override
   void initState() {
     super.initState();
+    final cache = MediaCacheStore.instance;
+    if (cache.songs.isNotEmpty) {
+      _songs = cache.songs;
+      _loadingSongs = false;
+    }
+    if (cache.covers.isNotEmpty) _covers = cache.covers;
     _load();
   }
 
@@ -45,6 +52,7 @@ class _MediaHubPageState extends State<MediaHubPage> {
       final songs =
           await widget.apiService.getMusicList(limit: 4, offset: 0);
       if (!mounted) return;
+      MediaCacheStore.instance.songs = songs;
       setState(() {
         _songs = songs;
         _loadingSongs = false;
@@ -56,6 +64,7 @@ class _MediaHubPageState extends State<MediaHubPage> {
     try {
       final covers = await _mediaApi.covers(limit: 3);
       if (!mounted) return;
+      MediaCacheStore.instance.covers = covers;
       setState(() => _covers = covers);
     } catch (_) {
       // 翻唱是增强功能，失败不影响入口。
@@ -74,11 +83,9 @@ class _MediaHubPageState extends State<MediaHubPage> {
   }
 
   void _openVideo() {
-    Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        builder: (_) => VideoListPage(apiService: widget.apiService),
-      ),
-    );
+    // 视频页先回退 Vue 小程序：直接打开 media 小程序的 /video 路由。
+    // 低频页面不值得为它常驻 video_player 插件。
+    MiniProgramRuntime().openByKey('media', path: 'video');
   }
 
   Future<void> _playSong(MusicModel song) async {

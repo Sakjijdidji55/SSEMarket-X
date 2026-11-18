@@ -10,6 +10,7 @@ import 'package:sse_market_x/core/api/media_api.dart';
 import 'package:sse_market_x/core/models/media_models.dart';
 import 'package:sse_market_x/core/models/music_model.dart';
 import 'package:sse_market_x/core/services/media_cache_service.dart';
+import 'package:sse_market_x/core/services/media_cache_store.dart';
 import 'package:sse_market_x/core/services/music_player_service.dart';
 import 'package:sse_market_x/shared/components/media/cached_image.dart';
 import 'package:sse_market_x/shared/theme/app_colors.dart';
@@ -69,6 +70,14 @@ class _MusicPageState extends State<MusicPage> {
   @override
   void initState() {
     super.initState();
+    final cache = MediaCacheStore.instance;
+    if (cache.songs.isNotEmpty) {
+      _songs = cache.songs;
+      _libraryLoading = false;
+    }
+    if (cache.voices.isNotEmpty) _voices = cache.voices;
+    if (cache.coverSongs.isNotEmpty) _coverSongs = cache.coverSongs;
+    if (cache.coverWorks.isNotEmpty) _coverWorks = cache.coverWorks;
     _loadLibrary();
     if (_mode == MusicMode.tts) unawaited(_loadTts());
     if (_mode == MusicMode.cover) unawaited(_loadCover());
@@ -100,8 +109,10 @@ class _MusicPageState extends State<MusicPage> {
         offset: more ? _offset : 0,
       );
       if (!mounted) return;
+      final next = more ? <MusicModel>[..._songs, ...list] : list;
+      MediaCacheStore.instance.songs = next;
       setState(() {
-        _songs = more ? <MusicModel>[..._songs, ...list] : list;
+        _songs = next;
         _offset = (more ? _offset : 0) + list.length;
         _hasMore = list.length >= 20;
         _libraryLoading = false;
@@ -127,6 +138,8 @@ class _MusicPageState extends State<MusicPage> {
       ]);
       if (!mounted) return;
       final voices = results[1] as List<TtsVoice>;
+      MediaCacheStore.instance.voices = voices;
+      MediaCacheStore.instance.me = results[0] as Map<String, dynamic>;
       setState(() {
         _voices = voices;
         _voiceId ??= voices.isEmpty ? null : voices.first.id;
@@ -155,6 +168,9 @@ class _MusicPageState extends State<MusicPage> {
       final voices = results[0] as List<TtsVoice>;
       final songs = results[1] as List<CoverSong>;
       final works = results[2] as List<CoverWork>;
+      MediaCacheStore.instance.voices = voices;
+      MediaCacheStore.instance.coverSongs = songs;
+      MediaCacheStore.instance.coverWorks = works;
       setState(() {
         _voices = voices;
         _voiceId ??= voices.isEmpty ? null : voices.first.id;
@@ -328,6 +344,7 @@ class _MusicPageState extends State<MusicPage> {
       });
       await _player.play(_coverResult!);
       final works = await _mediaApi.covers(limit: 6);
+      MediaCacheStore.instance.coverWorks = works;
       if (mounted) setState(() => _coverWorks = works);
     } catch (e) {
       if (!mounted) return;

@@ -4,6 +4,7 @@ import 'package:sse_market_x/core/api/api_service.dart';
 import 'package:sse_market_x/core/api/novel_api.dart';
 import 'package:sse_market_x/core/models/novel_models.dart';
 import 'package:sse_market_x/core/services/media_cache_service.dart';
+import 'package:sse_market_x/core/services/novel_cache_store.dart';
 import 'package:sse_market_x/shared/components/media/cached_image.dart';
 import 'package:sse_market_x/shared/theme/app_colors.dart';
 import 'package:sse_market_x/views/novel/novel_detail_page.dart';
@@ -39,6 +40,9 @@ class _NovelHomePageState extends State<NovelHomePage> {
   @override
   void initState() {
     super.initState();
+    if (NovelCacheStore.instance.categories.isNotEmpty) {
+      _categories = NovelCacheStore.instance.categories;
+    }
     _load(reset: true);
     _loadCategories();
   }
@@ -53,6 +57,7 @@ class _NovelHomePageState extends State<NovelHomePage> {
   Future<void> _loadCategories() async {
     try {
       final categories = await _api.getCategories();
+      NovelCacheStore.instance.categories = categories;
       if (mounted) setState(() => _categories = categories);
     } catch (_) {}
   }
@@ -68,6 +73,20 @@ class _NovelHomePageState extends State<NovelHomePage> {
       if (_loadingMore || !_hasMore) return;
       setState(() => _loadingMore = true);
     }
+    final cacheKey =
+        '${_shelf ? 'shelf' : 'discover'}|$_category|${_search.text.trim()}';
+    if (reset) {
+      final cached = NovelCacheStore.instance.lists[cacheKey];
+      if (cached != null && cached.novels.isNotEmpty) {
+        setState(() {
+          _novels = cached.novels;
+          _total = cached.total;
+          _offset = cached.novels.length;
+          _hasMore = cached.novels.length < cached.total;
+          _loading = false;
+        });
+      }
+    }
     try {
       final result = _shelf
           ? await _api.getShelf(limit: 18, offset: reset ? 0 : _offset)
@@ -78,6 +97,9 @@ class _NovelHomePageState extends State<NovelHomePage> {
               offset: reset ? 0 : _offset,
             );
       if (!mounted) return;
+      if (reset) {
+        NovelCacheStore.instance.lists[cacheKey] = result;
+      }
       setState(() {
         _novels = reset ? result.novels : <NovelItem>[..._novels, ...result.novels];
         _total = result.total;
